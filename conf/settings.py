@@ -25,6 +25,7 @@ SECRET_KEY = 'django-insecure-09canro_o^h654w%cp!d*$w4-x6#58c99o6^@_v=wgp!#(w!x0
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+STATIC_ROOT = 'static'
 
 # Application definition
 
