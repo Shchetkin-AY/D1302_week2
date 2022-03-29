@@ -1,6 +1,7 @@
 from random import sample
 
-from django.http import HttpResponseNotFound, HttpResponseServerError
+
+from django.http import HttpResponseNotFound, HttpResponseServerError, Http404
 from django.shortcuts import render
 
 from tours.data import tours, departures, title, subtitle, description
@@ -19,37 +20,43 @@ def main_view(request):
 
 
 def departure_view(request, departure):
-    filter_tours = {}
-    from_departure = departures.get(departure)
-    for key, item in tours.items():
-        if item['departure'] == departure:
-            filter_tours[key] = item
-    min_price = min(item['price'] for price, item in filter_tours.items())
-    max_price = max(item['price'] for price, item in filter_tours.items())
-    min_nights = min(item['nights'] for price, item in filter_tours.items())
-    max_nights = max(item['nights'] for price, item in filter_tours.items())
-    count_tours = len(filter_tours)
-    return render(request, 'tours/departure.html', context={
-        'departures': departures,
-        'from_departure': from_departure,
-        'filter_tours': filter_tours,
-        'count_tours': count_tours,
-        'min_price': min_price,
-        'max_price': max_price,
-        'min_nights': min_nights,
-        'max_nights': max_nights
+    if departure in departures:
+        filter_tours = {}
+        from_departure = departures.get(departure)
+        for key, item in tours.items():
+            if item['departure'] == departure:
+                filter_tours[key] = item
+        min_price = min(item['price'] for price, item in filter_tours.items())
+        max_price = max(item['price'] for price, item in filter_tours.items())
+        min_nights = min(item['nights'] for price, item in filter_tours.items())
+        max_nights = max(item['nights'] for price, item in filter_tours.items())
+        count_tours = len(filter_tours)
+        return render(request, 'tours/departure.html', context={
+            'departures': departures,
+            'from_departure': from_departure,
+            'filter_tours': filter_tours,
+            'count_tours': count_tours,
+            'min_price': min_price,
+            'max_price': max_price,
+            'min_nights': min_nights,
+            'max_nights': max_nights
 
-    })
-
+        })
+    else:
+        raise Http404
 
 def tour_view(request, tour_id):
     tour = tours.get(tour_id)
-    tour['departure'] = departures[tour['departure']]
-    return render(request, 'tours/tour.html', context={'tour': tour, 'departures': departures})
+    if 0 < tour_id <= len(tours):
+        tour['departure'] = departures[tour['departure']]
+        return render(request, 'tours/tour.html', context={'tour': tour, 'departures': departures})
+    else:
+        raise Http404
 
 
-def custom_handler404(request, exception):
-    return HttpResponseNotFound('Ресурс не найден!')
+
+def custom_handler404(request, exception=None):
+    return HttpResponseNotFound('Ресурс не найден!', status=404)
 
 
 def custom_handler500(request):
